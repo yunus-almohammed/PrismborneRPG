@@ -12,8 +12,12 @@ public class BattleManager : MonoBehaviour
 
     [SerializeField] private List<CharacterData> playerCharacters = new();
     [SerializeField] private List<CharacterData> enemyCharacters = new();
+    [SerializeField] private List<BattleUnitView> playerUnitViews = new();
+    [SerializeField] private List<BattleUnitView> enemyUnitViews = new();
 
     private readonly List<BattleUnit> battleUnits = new();
+    private readonly List<BattleUnit> playerBattleUnits = new();
+    private readonly List<BattleUnit> enemyBattleUnits = new();
     private int currentTurnIndex;
     private BattleActionMode currentActionMode = BattleActionMode.None;
 
@@ -33,8 +37,14 @@ public class BattleManager : MonoBehaviour
         }
 
         battleUnits.Clear();
-        AddBattleUnits(playerCharacters);
-        AddBattleUnits(enemyCharacters);
+        playerBattleUnits.Clear();
+        enemyBattleUnits.Clear();
+
+        AddBattleUnits(playerCharacters, playerBattleUnits);
+        AddBattleUnits(enemyCharacters, enemyBattleUnits);
+
+        battleUnits.AddRange(playerBattleUnits);
+        battleUnits.AddRange(enemyBattleUnits);
 
         var orderedUnits = battleUnits
             .OrderByDescending(unit => unit.Speed)
@@ -54,15 +64,17 @@ public class BattleManager : MonoBehaviour
         var turnOrder = string.Join(", ", battleUnits.Select((unit, index) =>
             $"{index + 1}. {unit.Name} ({unit.Team}) SPD {unit.Speed}"));
 
+        BindUnitViews();
+        RefreshUnitViews();
         Debug.Log($"Turn order: {turnOrder}");
         StartCurrentTurn();
     }
 
-    private void AddBattleUnits(IEnumerable<CharacterData> characters)
+    private void AddBattleUnits(IEnumerable<CharacterData> characters, ICollection<BattleUnit> targetList)
     {
         foreach (var character in characters.Where(character => character != null))
         {
-            battleUnits.Add(new BattleUnit(character));
+            targetList.Add(new BattleUnit(character));
         }
     }
 
@@ -139,7 +151,58 @@ public class BattleManager : MonoBehaviour
         }
 
         currentActionMode = BattleActionMode.None;
+        RefreshUnitViews();
         EndCurrentTurn();
+    }
+
+    private void BindUnitViews()
+    {
+        if (playerUnitViews.Count < playerBattleUnits.Count)
+        {
+            Debug.LogWarning($"BattleManager has fewer player unit views ({playerUnitViews.Count}) than player units ({playerBattleUnits.Count}).");
+        }
+
+        if (enemyUnitViews.Count < enemyBattleUnits.Count)
+        {
+            Debug.LogWarning($"BattleManager has fewer enemy unit views ({enemyUnitViews.Count}) than enemy units ({enemyBattleUnits.Count}).");
+        }
+
+        BindViewGroup(playerUnitViews, playerBattleUnits);
+        BindViewGroup(enemyUnitViews, enemyBattleUnits);
+    }
+
+    private void BindViewGroup(IReadOnlyList<BattleUnitView> views, IReadOnlyList<BattleUnit> units)
+    {
+        var bindCount = Mathf.Min(views.Count, units.Count);
+        for (var index = 0; index < bindCount; index++)
+        {
+            var view = views[index];
+            if (view == null)
+            {
+                continue;
+            }
+
+            view.Bind(units[index]);
+        }
+    }
+
+    private void RefreshUnitViews()
+    {
+        RefreshViewGroup(playerUnitViews);
+        RefreshViewGroup(enemyUnitViews);
+    }
+
+    private void RefreshViewGroup(IEnumerable<BattleUnitView> views)
+    {
+        foreach (var view in views)
+        {
+            if (view == null)
+            {
+                continue;
+            }
+
+            view.Refresh();
+        }
     }
 
     private BattleUnit GetCurrentUnit()
