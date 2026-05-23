@@ -36,6 +36,8 @@ public class BattleManager : MonoBehaviour
         battleUnits.Clear();
         battleUnits.AddRange(orderedUnits);
 
+        currentTurnIndex = 0;
+
         if (battleUnits.Count == 0)
         {
             Debug.Log("Turn order: no valid battle units found.");
@@ -46,8 +48,6 @@ public class BattleManager : MonoBehaviour
             $"{index + 1}. {unit.Name} ({unit.Team}) SPD {unit.Speed}"));
 
         Debug.Log($"Turn order: {turnOrder}");
-
-        currentTurnIndex = 0;
         StartCurrentTurn();
     }
 
