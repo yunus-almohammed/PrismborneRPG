@@ -78,7 +78,7 @@ public class BattleManager : MonoBehaviour
 
         if (currentUnit.Team == CharacterTeam.Enemy)
         {
-            Debug.Log("Enemy actions are not manual yet.");
+            Debug.LogWarning("Enemy turn is not controlled manually.");
             return;
         }
 
@@ -90,7 +90,7 @@ public class BattleManager : MonoBehaviour
     {
         if (currentActionMode != BattleActionMode.SelectingBasicAttackTarget)
         {
-            Debug.LogWarning("BattleManager is not currently selecting a basic attack target.");
+            Debug.LogWarning("Choose an action first.");
             return;
         }
 
@@ -109,15 +109,21 @@ public class BattleManager : MonoBehaviour
         }
 
         var target = battleUnits[targetBattleUnitIndex];
-        if (target == null || !target.IsAlive)
+        if (target == null)
         {
-            Debug.LogWarning("BattleManager cannot resolve a basic attack because the selected target is missing or defeated.");
+            Debug.LogWarning($"BattleManager received an invalid target index: {targetBattleUnitIndex}.");
             return;
         }
 
         if (target.Team == attacker.Team)
         {
-            Debug.LogWarning("BattleManager cannot resolve a basic attack against a unit on the same team.");
+            Debug.LogWarning("Cannot target an ally with basic attack.");
+            return;
+        }
+
+        if (!target.IsAlive)
+        {
+            Debug.LogWarning("Cannot target a defeated unit.");
             return;
         }
 
