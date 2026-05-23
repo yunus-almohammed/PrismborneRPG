@@ -6,6 +6,7 @@ public class BattleUnitView : MonoBehaviour
 {
     public BattleUnit boundUnit;
     public TextMeshProUGUI nameText;
+    public TextMeshProUGUI hpText;
     public Image boxImage;
 
     public Color playerColor = new Color(0.3f, 0.6f, 1f, 1f);
@@ -26,6 +27,11 @@ public class BattleUnitView : MonoBehaviour
             nameText.text = data.characterName;
         }
 
+        if (hpText != null)
+        {
+            hpText.text = $"{unit.CurrentHP} / {unit.MaxHP} HP";
+        }
+
         if (boxImage != null)
         {
             boxImage.color = data.team == CharacterTeam.Player ? playerColor : enemyColor;
@@ -43,6 +49,11 @@ public class BattleUnitView : MonoBehaviour
         if (nameText != null)
         {
             nameText.text = data.characterName;
+        }
+
+        if (hpText != null)
+        {
+            hpText.text = $"{boundUnit.CurrentHP} / {boundUnit.MaxHP} HP";
         }
 
         if (!gameObject.activeInHierarchy)
@@ -65,6 +76,13 @@ public class BattleUnitView : MonoBehaviour
             var color = nameText.color;
             color.a = targetAlpha;
             nameText.color = color;
+        }
+
+        if (hpText != null)
+        {
+            var color = hpText.color;
+            color.a = targetAlpha;
+            hpText.color = color;
         }
     }
 }
