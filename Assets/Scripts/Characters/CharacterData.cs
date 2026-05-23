@@ -6,7 +6,7 @@ public enum CharacterTeam
     Enemy
 }
 
-[CreateAssetMenu(menuName = "RPG/Character Data")]
+[CreateAssetMenu(menuName = "RPG/Character Data", fileName = "NewCharacterData")]
 public class CharacterData : ScriptableObject
 {
     public string characterName;
