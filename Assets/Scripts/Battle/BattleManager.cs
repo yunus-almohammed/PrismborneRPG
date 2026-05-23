@@ -4,11 +4,18 @@ using UnityEngine;
 
 public class BattleManager : MonoBehaviour
 {
+    private enum BattleActionMode
+    {
+        None,
+        SelectingBasicAttackTarget
+    }
+
     [SerializeField] private List<CharacterData> playerCharacters = new();
     [SerializeField] private List<CharacterData> enemyCharacters = new();
 
     private readonly List<BattleUnit> battleUnits = new();
     private int currentTurnIndex;
+    private BattleActionMode currentActionMode = BattleActionMode.None;
 
     private void Start()
     {
@@ -69,18 +76,55 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
-        var target = battleUnits.FirstOrDefault(unit => unit != null && unit.Team != currentUnit.Team && unit.IsAlive);
-
-        if (target == null)
+        if (currentUnit.Team == CharacterTeam.Enemy)
         {
-            Debug.Log("Battle is over.");
+            Debug.Log("Enemy actions are not manual yet.");
             return;
         }
 
-        var damage = currentUnit.GetBasicAttackDamage();
+        currentActionMode = BattleActionMode.SelectingBasicAttackTarget;
+        Debug.Log($"Select a target for {currentUnit.Name}'s basic attack.");
+    }
+
+    public void BasicAttackTarget(int targetBattleUnitIndex)
+    {
+        if (currentActionMode != BattleActionMode.SelectingBasicAttackTarget)
+        {
+            Debug.LogWarning("BattleManager is not currently selecting a basic attack target.");
+            return;
+        }
+
+        if (targetBattleUnitIndex < 0 || targetBattleUnitIndex >= battleUnits.Count)
+        {
+            Debug.LogWarning($"BattleManager received an invalid target index: {targetBattleUnitIndex}.");
+            return;
+        }
+
+        var attacker = GetCurrentUnit();
+        if (attacker == null || !attacker.IsAlive)
+        {
+            Debug.LogWarning("BattleManager cannot resolve a basic attack because the current attacker is missing or defeated.");
+            currentActionMode = BattleActionMode.None;
+            return;
+        }
+
+        var target = battleUnits[targetBattleUnitIndex];
+        if (target == null || !target.IsAlive)
+        {
+            Debug.LogWarning("BattleManager cannot resolve a basic attack because the selected target is missing or defeated.");
+            return;
+        }
+
+        if (target.Team == attacker.Team)
+        {
+            Debug.LogWarning("BattleManager cannot resolve a basic attack against a unit on the same team.");
+            return;
+        }
+
+        var damage = attacker.GetBasicAttackDamage();
         target.TakeDamage(damage);
 
-        Debug.Log($"{currentUnit.Name} used {currentUnit.BasicAttackName} on {target.Name} for {damage} damage.");
+        Debug.Log($"{attacker.Name} used {attacker.BasicAttackName} on {target.Name} for {damage} damage.");
         Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
 
         if (!target.IsAlive)
@@ -88,7 +132,38 @@ public class BattleManager : MonoBehaviour
             Debug.Log($"{target.Name} was defeated.");
         }
 
+        currentActionMode = BattleActionMode.None;
         EndCurrentTurn();
+    }
+
+    private BattleUnit GetCurrentUnit()
+    {
+        if (battleUnits.Count == 0)
+        {
+            return null;
+        }
+
+        currentTurnIndex = Mathf.Clamp(currentTurnIndex, 0, battleUnits.Count - 1);
+        return battleUnits[currentTurnIndex];
+    }
+
+    public int GetBattleUnitIndexByName(string unitName)
+    {
+        if (string.IsNullOrWhiteSpace(unitName))
+        {
+            return -1;
+        }
+
+        for (var index = 0; index < battleUnits.Count; index++)
+        {
+            var unit = battleUnits[index];
+            if (unit != null && unit.Name == unitName)
+            {
+                return index;
+            }
+        }
+
+        return -1;
     }
 
     private void StartCurrentTurn()
@@ -106,6 +181,7 @@ public class BattleManager : MonoBehaviour
         }
 
         currentTurnIndex = Mathf.Clamp(currentTurnIndex, 0, battleUnits.Count - 1);
+        currentActionMode = BattleActionMode.None;
 
         var currentUnit = battleUnits[currentTurnIndex];
 
@@ -116,17 +192,6 @@ public class BattleManager : MonoBehaviour
         }
 
         Debug.Log($"{currentUnit.Name}'s turn");
-    }
-
-    private BattleUnit GetCurrentUnit()
-    {
-        if (battleUnits.Count == 0)
-        {
-            return null;
-        }
-
-        currentTurnIndex = Mathf.Clamp(currentTurnIndex, 0, battleUnits.Count - 1);
-        return battleUnits[currentTurnIndex];
     }
 
     public void EndCurrentTurn()
