@@ -8,6 +8,7 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private List<CharacterData> enemyCharacters = new();
 
     private readonly List<BattleUnit> battleUnits = new();
+    private int currentTurnIndex;
 
     private void Start()
     {
@@ -45,6 +46,9 @@ public class BattleManager : MonoBehaviour
             $"{index + 1}. {unit.Name} ({unit.Team}) SPD {unit.Speed}"));
 
         Debug.Log($"Turn order: {turnOrder}");
+
+        currentTurnIndex = 0;
+        StartCurrentTurn();
     }
 
     private void AddBattleUnits(IEnumerable<CharacterData> characters)
@@ -53,5 +57,44 @@ public class BattleManager : MonoBehaviour
         {
             battleUnits.Add(new BattleUnit(character));
         }
+    }
+
+    private void StartCurrentTurn()
+    {
+        if (battleUnits.Count == 0)
+        {
+            Debug.LogWarning("BattleManager cannot start a turn because there are no battle units.");
+            return;
+        }
+
+        if (!battleUnits.Any(unit => unit.IsAlive))
+        {
+            Debug.LogWarning("BattleManager cannot start a turn because no battle units are alive.");
+            return;
+        }
+
+        currentTurnIndex = Mathf.Clamp(currentTurnIndex, 0, battleUnits.Count - 1);
+
+        var currentUnit = battleUnits[currentTurnIndex];
+
+        if (!currentUnit.IsAlive)
+        {
+            EndCurrentTurn();
+            return;
+        }
+
+        Debug.Log($"{currentUnit.Name}'s turn");
+    }
+
+    public void EndCurrentTurn()
+    {
+        if (battleUnits.Count == 0)
+        {
+            Debug.LogWarning("BattleManager cannot end a turn because there are no battle units.");
+            return;
+        }
+
+        currentTurnIndex = (currentTurnIndex + 1) % battleUnits.Count;
+        StartCurrentTurn();
     }
 }
