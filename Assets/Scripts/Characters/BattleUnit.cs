@@ -47,6 +47,11 @@ public class BattleUnit
         return Data != null ? Data.skillPower : 0;
     }
 
+    public CharacterData GetData()
+    {
+        return Data;
+    }
+
     public void HealToFull()
     {
         CurrentHP = MaxHP;
