@@ -59,6 +59,38 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    public void BasicAttack()
+    {
+        var currentUnit = GetCurrentUnit();
+
+        if (currentUnit == null || !currentUnit.IsAlive)
+        {
+            Debug.LogWarning("BattleManager cannot perform a basic attack because the current unit is missing or defeated.");
+            return;
+        }
+
+        var target = battleUnits.FirstOrDefault(unit => unit != null && unit.Team != currentUnit.Team && unit.IsAlive);
+
+        if (target == null)
+        {
+            Debug.Log("Battle is over.");
+            return;
+        }
+
+        var damage = currentUnit.GetBasicAttackDamage();
+        target.TakeDamage(damage);
+
+        Debug.Log($"{currentUnit.Name} used {currentUnit.BasicAttackName} on {target.Name} for {damage} damage.");
+        Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+
+        if (!target.IsAlive)
+        {
+            Debug.Log($"{target.Name} was defeated.");
+        }
+
+        EndCurrentTurn();
+    }
+
     private void StartCurrentTurn()
     {
         if (battleUnits.Count == 0)
@@ -84,6 +116,17 @@ public class BattleManager : MonoBehaviour
         }
 
         Debug.Log($"{currentUnit.Name}'s turn");
+    }
+
+    private BattleUnit GetCurrentUnit()
+    {
+        if (battleUnits.Count == 0)
+        {
+            return null;
+        }
+
+        currentTurnIndex = Mathf.Clamp(currentTurnIndex, 0, battleUnits.Count - 1);
+        return battleUnits[currentTurnIndex];
     }
 
     public void EndCurrentTurn()

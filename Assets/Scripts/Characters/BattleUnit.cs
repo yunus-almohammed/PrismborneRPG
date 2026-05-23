@@ -6,6 +6,7 @@ public class BattleUnit
     public int CurrentHP { get; private set; }
 
     public string Name => Data != null ? Data.characterName : string.Empty;
+    public string BasicAttackName => Data != null && !string.IsNullOrWhiteSpace(Data.basicAttackName) ? Data.basicAttackName : "Basic Attack";
     public CharacterTeam Team => Data != null ? Data.team : default;
     public int MaxHP => Data != null ? Data.maxHP : 0;
     public int Attack => Data != null ? Data.attack : 0;
