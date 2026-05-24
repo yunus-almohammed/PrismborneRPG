@@ -14,10 +14,12 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private List<CharacterData> enemyCharacters = new();
     [SerializeField] private List<BattleUnitView> playerUnitViews = new();
     [SerializeField] private List<BattleUnitView> enemyUnitViews = new();
+    [SerializeField] private List<TargetButton> enemyTargetButtons = new();
 
     private readonly List<BattleUnit> battleUnits = new();
     private readonly List<BattleUnit> playerBattleUnits = new();
     private readonly List<BattleUnit> enemyBattleUnits = new();
+    private readonly HashSet<TargetButton> configuredEnemyTargetButtons = new();
     private int currentTurnIndex;
     private BattleActionMode currentActionMode = BattleActionMode.None;
 
@@ -65,6 +67,7 @@ public class BattleManager : MonoBehaviour
             $"{index + 1}. {unit.Name} ({unit.Team}) SPD {unit.Speed}"));
 
         BindUnitViews();
+        SetupTargetButtons();
         RefreshUnitViews();
         Debug.Log($"Turn order: {turnOrder}");
         StartCurrentTurn();
@@ -95,6 +98,7 @@ public class BattleManager : MonoBehaviour
         }
 
         currentActionMode = BattleActionMode.SelectingBasicAttackTarget;
+        SetEnemyTargetButtonsInteractable(true);
         Debug.Log($"Select a target for {currentUnit.Name}'s basic attack.");
     }
 
@@ -151,6 +155,7 @@ public class BattleManager : MonoBehaviour
         }
 
         currentActionMode = BattleActionMode.None;
+        SetEnemyTargetButtonsInteractable(false);
         RefreshUnitViews();
         EndCurrentTurn();
     }
@@ -169,6 +174,68 @@ public class BattleManager : MonoBehaviour
 
         BindViewGroup(playerUnitViews, playerBattleUnits);
         BindViewGroup(enemyUnitViews, enemyBattleUnits);
+    }
+
+    private void SetupTargetButtons()
+    {
+        configuredEnemyTargetButtons.Clear();
+
+        foreach (var button in enemyTargetButtons)
+        {
+            if (button == null)
+            {
+                continue;
+            }
+
+            button.Setup(this, -1);
+            button.SetInteractable(false);
+        }
+
+        var livingEnemyUnits = enemyBattleUnits.Where(unit => unit != null && unit.IsAlive).ToList();
+        if (enemyTargetButtons.Count < livingEnemyUnits.Count)
+        {
+            Debug.LogWarning($"BattleManager has fewer enemy target buttons ({enemyTargetButtons.Count}) than living enemy units ({livingEnemyUnits.Count}).");
+        }
+
+        var setupCount = Mathf.Min(enemyTargetButtons.Count, livingEnemyUnits.Count);
+        for (var index = 0; index < setupCount; index++)
+        {
+            var button = enemyTargetButtons[index];
+            if (button == null)
+            {
+                continue;
+            }
+
+            var battleUnitIndex = battleUnits.IndexOf(livingEnemyUnits[index]);
+            if (battleUnitIndex < 0)
+            {
+                Debug.LogWarning($"BattleManager could not find a battle unit index for enemy unit {livingEnemyUnits[index].Name}.");
+                continue;
+            }
+
+            button.Setup(this, battleUnitIndex);
+            button.SetInteractable(false);
+            configuredEnemyTargetButtons.Add(button);
+        }
+    }
+
+    private void SetEnemyTargetButtonsInteractable(bool value)
+    {
+        foreach (var button in enemyTargetButtons)
+        {
+            if (button == null)
+            {
+                continue;
+            }
+
+            if (!value)
+            {
+                button.SetInteractable(false);
+                continue;
+            }
+
+            button.SetInteractable(configuredEnemyTargetButtons.Contains(button));
+        }
     }
 
     private void BindViewGroup(IReadOnlyList<BattleUnitView> views, IReadOnlyList<BattleUnit> units)
@@ -251,6 +318,7 @@ public class BattleManager : MonoBehaviour
 
         currentTurnIndex = Mathf.Clamp(currentTurnIndex, 0, battleUnits.Count - 1);
         currentActionMode = BattleActionMode.None;
+        SetEnemyTargetButtonsInteractable(false);
 
         var currentUnit = battleUnits[currentTurnIndex];
 
