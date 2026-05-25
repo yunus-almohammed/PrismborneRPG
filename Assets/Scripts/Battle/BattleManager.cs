@@ -591,6 +591,24 @@ public class BattleManager : MonoBehaviour
 
         SetEnemyTargetButtonsInteractable(false);
 
+        if (enemy.SkillTargetType == SkillTargetType.AllOpponents && Random.value < 0.3f)
+        {
+            PerformEnemySkill(enemy);
+            return;
+        }
+
+        PerformEnemyBasicAttack(enemy);
+    }
+
+    private void PerformEnemyBasicAttack(BattleUnit enemy)
+    {
+        if (enemy == null || !enemy.IsAlive || isBattleOver)
+        {
+            return;
+        }
+
+        SetEnemyTargetButtonsInteractable(false);
+
         var target = battleUnits.FirstOrDefault(unit =>
             unit != null &&
             unit.Team == CharacterTeam.Player &&
@@ -611,6 +629,55 @@ public class BattleManager : MonoBehaviour
         if (!target.IsAlive)
         {
             Debug.Log($"{target.Name} was defeated.");
+        }
+
+        RefreshUnitViews();
+        CheckBattleEnd();
+
+        if (!isBattleOver)
+        {
+            EndCurrentTurn();
+        }
+    }
+
+    private void PerformEnemySkill(BattleUnit enemy)
+    {
+        if (enemy == null || !enemy.IsAlive || isBattleOver)
+        {
+            return;
+        }
+
+        SetEnemyTargetButtonsInteractable(false);
+
+        if (enemy.SkillTargetType == SkillTargetType.SingleTarget)
+        {
+            PerformEnemyBasicAttack(enemy);
+            return;
+        }
+
+        var targets = battleUnits
+            .Where(unit => unit != null && unit.Team == CharacterTeam.Player && unit.IsAlive)
+            .ToList();
+
+        if (targets.Count == 0)
+        {
+            CheckBattleEnd();
+            return;
+        }
+
+        var damage = enemy.GetSkillDamage();
+        Debug.Log($"{enemy.Name} used {enemy.SkillName}.");
+
+        foreach (var target in targets)
+        {
+            target.TakeDamage(damage);
+            Debug.Log($"{target.Name} took {damage} damage.");
+            Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+
+            if (!target.IsAlive)
+            {
+                Debug.Log($"{target.Name} was defeated.");
+            }
         }
 
         RefreshUnitViews();
