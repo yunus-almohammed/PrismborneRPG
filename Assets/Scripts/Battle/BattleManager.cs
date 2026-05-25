@@ -21,6 +21,7 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private List<TargetButton> enemyTargetButtons = new();
     [SerializeField] private GameObject battleResultPanel;
     [SerializeField] private TextMeshProUGUI battleResultText;
+    [SerializeField] private TextMeshProUGUI turnIndicatorText;
 
     private readonly List<BattleUnit> battleUnits = new();
     private readonly List<BattleUnit> playerBattleUnits = new();
@@ -55,6 +56,8 @@ public class BattleManager : MonoBehaviour
         {
             battleResultPanel.SetActive(false);
         }
+
+        UpdateTurnIndicator(string.Empty);
 
         AddBattleUnits(playerCharacters, playerBattleUnits);
         AddBattleUnits(enemyCharacters, enemyBattleUnits);
@@ -455,6 +458,19 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    private void UpdateTurnIndicator(string message)
+    {
+        if (turnIndicatorText != null)
+        {
+            turnIndicatorText.text = message;
+        }
+
+        if (!string.IsNullOrWhiteSpace(message) && message.EndsWith("'s Turn"))
+        {
+            Debug.Log(message);
+        }
+    }
+
     private BattleUnit GetCurrentUnit()
     {
         if (battleUnits.Count == 0)
@@ -519,7 +535,7 @@ public class BattleManager : MonoBehaviour
             var currentUnit = battleUnits[currentTurnIndex];
             if (currentUnit != null && currentUnit.IsAlive)
             {
-                Debug.Log($"{currentUnit.Name}'s turn");
+                UpdateTurnIndicator($"{currentUnit.Name}'s Turn");
 
                 if (currentUnit.Team == CharacterTeam.Enemy)
                 {
@@ -726,6 +742,7 @@ public class BattleManager : MonoBehaviour
     private void ShowBattleResult(string resultMessage)
     {
         SetEnemyTargetButtonsInteractable(false);
+        UpdateTurnIndicator("Battle Over");
 
         if (battleResultPanel != null)
         {
