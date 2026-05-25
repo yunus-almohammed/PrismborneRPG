@@ -10,7 +10,8 @@ public class BattleManager : MonoBehaviour
     private enum BattleActionMode
     {
         None,
-        SelectingBasicAttackTarget
+        SelectingBasicAttackTarget,
+        SelectingSkillTarget
     }
 
     [SerializeField] private List<CharacterData> playerCharacters = new();
@@ -132,6 +133,12 @@ public class BattleManager : MonoBehaviour
 
     public void BasicAttackTarget(int targetBattleUnitIndex)
     {
+        if (currentActionMode == BattleActionMode.SelectingSkillTarget)
+        {
+            SkillTarget(targetBattleUnitIndex);
+            return;
+        }
+
         if (currentActionMode != BattleActionMode.SelectingBasicAttackTarget)
         {
             Debug.LogWarning("Choose an action first.");
@@ -193,6 +200,138 @@ public class BattleManager : MonoBehaviour
 
         SetEnemyTargetButtonsInteractable(false);
         EndCurrentTurn();
+    }
+
+    public void UseSkill()
+    {
+        if (isBattleOver)
+        {
+            SetEnemyTargetButtonsInteractable(false);
+            return;
+        }
+
+        var currentUnit = GetCurrentUnit();
+
+        if (currentUnit == null || !currentUnit.IsAlive)
+        {
+            Debug.LogWarning("BattleManager cannot use a skill because the current unit is missing or defeated.");
+            return;
+        }
+
+        if (currentUnit.Team == CharacterTeam.Enemy)
+        {
+            Debug.LogWarning("Enemy skills are not manual yet.");
+            return;
+        }
+
+        if (currentUnit.SkillTargetType == SkillTargetType.AllOpponents)
+        {
+            currentActionMode = BattleActionMode.None;
+            SetEnemyTargetButtonsInteractable(false);
+
+            var targets = battleUnits
+                .Where(unit => unit != null && unit.Team != currentUnit.Team && unit.IsAlive)
+                .ToList();
+
+            if (targets.Count == 0)
+            {
+                CheckBattleEnd();
+                return;
+            }
+
+            var damage = currentUnit.GetSkillDamage();
+            Debug.Log($"{currentUnit.Name} used {currentUnit.SkillName}.");
+
+            foreach (var target in targets)
+            {
+                target.TakeDamage(damage);
+                Debug.Log($"{target.Name} took {damage} damage.");
+                Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+
+                if (!target.IsAlive)
+                {
+                    Debug.Log($"{target.Name} was defeated.");
+                }
+            }
+
+            RefreshUnitViews();
+            CheckBattleEnd();
+
+            if (!isBattleOver)
+            {
+                EndCurrentTurn();
+            }
+
+            return;
+        }
+
+        currentActionMode = BattleActionMode.SelectingSkillTarget;
+        SetEnemyTargetButtonsInteractable(true);
+        Debug.Log($"Select a target for {currentUnit.Name}'s skill.");
+    }
+
+    public void SkillTarget(int targetBattleUnitIndex)
+    {
+        if (currentActionMode != BattleActionMode.SelectingSkillTarget)
+        {
+            Debug.LogWarning("Choose a skill first.");
+            return;
+        }
+
+        if (targetBattleUnitIndex < 0 || targetBattleUnitIndex >= battleUnits.Count)
+        {
+            Debug.LogWarning($"BattleManager received an invalid target index: {targetBattleUnitIndex}.");
+            return;
+        }
+
+        var attacker = GetCurrentUnit();
+        if (attacker == null || !attacker.IsAlive)
+        {
+            Debug.LogWarning("BattleManager cannot resolve a skill because the current unit is missing or defeated.");
+            currentActionMode = BattleActionMode.None;
+            SetEnemyTargetButtonsInteractable(false);
+            return;
+        }
+
+        var target = battleUnits[targetBattleUnitIndex];
+        if (target == null)
+        {
+            Debug.LogWarning($"BattleManager received an invalid target index: {targetBattleUnitIndex}.");
+            return;
+        }
+
+        if (!target.IsAlive)
+        {
+            Debug.LogWarning("Cannot target a defeated unit.");
+            return;
+        }
+
+        if (target.Team == attacker.Team)
+        {
+            Debug.LogWarning("Cannot target an ally with a skill.");
+            return;
+        }
+
+        var damage = attacker.GetSkillDamage();
+        target.TakeDamage(damage);
+
+        Debug.Log($"{attacker.Name} used {attacker.SkillName} on {target.Name} for {damage} damage.");
+        Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+
+        if (!target.IsAlive)
+        {
+            Debug.Log($"{target.Name} was defeated.");
+        }
+
+        currentActionMode = BattleActionMode.None;
+        SetEnemyTargetButtonsInteractable(false);
+        RefreshUnitViews();
+        CheckBattleEnd();
+
+        if (!isBattleOver)
+        {
+            EndCurrentTurn();
+        }
     }
 
     private void BindUnitViews()
