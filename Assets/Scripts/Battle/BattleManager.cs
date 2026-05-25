@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class BattleManager : MonoBehaviour
 {
@@ -16,6 +18,8 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private List<BattleUnitView> playerUnitViews = new();
     [SerializeField] private List<BattleUnitView> enemyUnitViews = new();
     [SerializeField] private List<TargetButton> enemyTargetButtons = new();
+    [SerializeField] private GameObject battleResultPanel;
+    [SerializeField] private TextMeshProUGUI battleResultText;
 
     private readonly List<BattleUnit> battleUnits = new();
     private readonly List<BattleUnit> playerBattleUnits = new();
@@ -45,6 +49,11 @@ public class BattleManager : MonoBehaviour
         playerBattleUnits.Clear();
         enemyBattleUnits.Clear();
         isBattleOver = false;
+
+        if (battleResultPanel != null)
+        {
+            battleResultPanel.SetActive(false);
+        }
 
         AddBattleUnits(playerCharacters, playerBattleUnits);
         AddBattleUnits(enemyCharacters, enemyBattleUnits);
@@ -493,8 +502,8 @@ public class BattleManager : MonoBehaviour
             isBattleOver = true;
             currentActionMode = BattleActionMode.None;
             StopEnemyTurnRoutine();
-            SetEnemyTargetButtonsInteractable(false);
             Debug.Log("Victory!");
+            ShowBattleResult("Victory!");
             return;
         }
 
@@ -503,9 +512,29 @@ public class BattleManager : MonoBehaviour
             isBattleOver = true;
             currentActionMode = BattleActionMode.None;
             StopEnemyTurnRoutine();
-            SetEnemyTargetButtonsInteractable(false);
             Debug.Log("Defeat!");
+            ShowBattleResult("Defeat!");
         }
+    }
+
+    private void ShowBattleResult(string resultMessage)
+    {
+        SetEnemyTargetButtonsInteractable(false);
+
+        if (battleResultPanel != null)
+        {
+            battleResultPanel.SetActive(true);
+        }
+
+        if (battleResultText != null)
+        {
+            battleResultText.text = resultMessage;
+        }
+    }
+
+    public void RestartBattle()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     private void StopEnemyTurnRoutine()
