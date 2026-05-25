@@ -19,6 +19,7 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private List<BattleUnitView> playerUnitViews = new();
     [SerializeField] private List<BattleUnitView> enemyUnitViews = new();
     [SerializeField] private List<TargetButton> enemyTargetButtons = new();
+    [SerializeField] private List<WorldTarget3D> enemyWorldTargets = new();
     [SerializeField] private GameObject battleResultPanel;
     [SerializeField] private TextMeshProUGUI battleResultText;
     [SerializeField] private TextMeshProUGUI turnIndicatorText;
@@ -85,6 +86,7 @@ public class BattleManager : MonoBehaviour
 
         BindUnitViews();
         SetupTargetButtons();
+        SetupWorldTargets();
         RefreshUnitViews();
         Debug.Log($"Turn order: {turnOrder}");
         StartCurrentTurn();
@@ -337,6 +339,28 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    public void OnWorldTargetClicked(int targetBattleUnitIndex)
+    {
+        if (isBattleOver)
+        {
+            return;
+        }
+
+        if (currentActionMode == BattleActionMode.SelectingBasicAttackTarget)
+        {
+            BasicAttackTarget(targetBattleUnitIndex);
+            return;
+        }
+
+        if (currentActionMode == BattleActionMode.SelectingSkillTarget)
+        {
+            SkillTarget(targetBattleUnitIndex);
+            return;
+        }
+
+        Debug.LogWarning("Choose an action first.");
+    }
+
     private void BindUnitViews()
     {
         if (playerUnitViews.Count < playerBattleUnits.Count)
@@ -393,6 +417,44 @@ public class BattleManager : MonoBehaviour
             button.Setup(this, battleUnitIndex);
             button.SetTargetAvailable(false);
             enemyTargetButtonIndices[button] = battleUnitIndex;
+        }
+    }
+
+    private void SetupWorldTargets()
+    {
+        foreach (var worldTarget in enemyWorldTargets)
+        {
+            if (worldTarget == null)
+            {
+                continue;
+            }
+
+            worldTarget.Setup(this, -1);
+        }
+
+        if (enemyWorldTargets.Count < enemyBattleUnits.Count)
+        {
+            Debug.LogWarning($"BattleManager has fewer enemy world targets ({enemyWorldTargets.Count}) than enemy units ({enemyBattleUnits.Count}).");
+        }
+
+        var setupCount = Mathf.Min(enemyWorldTargets.Count, enemyBattleUnits.Count);
+        for (var index = 0; index < setupCount; index++)
+        {
+            var worldTarget = enemyWorldTargets[index];
+            if (worldTarget == null)
+            {
+                continue;
+            }
+
+            var enemyUnit = enemyBattleUnits[index];
+            var battleUnitIndex = battleUnits.IndexOf(enemyUnit);
+            if (battleUnitIndex < 0)
+            {
+                Debug.LogWarning($"BattleManager could not find a battle unit index for enemy unit {enemyUnit.Name}.");
+                continue;
+            }
+
+            worldTarget.Setup(this, battleUnitIndex);
         }
     }
 
