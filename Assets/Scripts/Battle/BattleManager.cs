@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -23,6 +24,7 @@ public class BattleManager : MonoBehaviour
     private int currentTurnIndex;
     private BattleActionMode currentActionMode = BattleActionMode.None;
     private bool isBattleOver;
+    private Coroutine enemyTurnCoroutine;
 
     private void Start()
     {
@@ -73,6 +75,15 @@ public class BattleManager : MonoBehaviour
         RefreshUnitViews();
         Debug.Log($"Turn order: {turnOrder}");
         StartCurrentTurn();
+    }
+
+    private void OnDisable()
+    {
+        if (enemyTurnCoroutine != null)
+        {
+            StopCoroutine(enemyTurnCoroutine);
+            enemyTurnCoroutine = null;
+        }
     }
 
     private void AddBattleUnits(IEnumerable<CharacterData> characters, ICollection<BattleUnit> targetList)
@@ -330,22 +341,27 @@ public class BattleManager : MonoBehaviour
     {
         if (isBattleOver)
         {
+            StopEnemyTurnRoutine();
             SetEnemyTargetButtonsInteractable(false);
             return;
         }
 
         if (battleUnits.Count == 0)
         {
+            StopEnemyTurnRoutine();
             Debug.LogWarning("BattleManager cannot start a turn because there are no battle units.");
             return;
         }
 
         if (!battleUnits.Any(unit => unit.IsAlive))
         {
+            StopEnemyTurnRoutine();
             Debug.LogWarning("BattleManager cannot start a turn because no battle units are alive.");
+            CheckBattleEnd();
             return;
         }
 
+        StopEnemyTurnRoutine();
         currentTurnIndex = Mathf.Clamp(currentTurnIndex, 0, battleUnits.Count - 1);
         currentActionMode = BattleActionMode.None;
         SetEnemyTargetButtonsInteractable(false);
@@ -356,6 +372,12 @@ public class BattleManager : MonoBehaviour
             if (currentUnit != null && currentUnit.IsAlive)
             {
                 Debug.Log($"{currentUnit.Name}'s turn");
+
+                if (currentUnit.Team == CharacterTeam.Enemy)
+                {
+                    enemyTurnCoroutine = StartCoroutine(EnemyTurnRoutine(currentUnit));
+                }
+
                 return;
             }
 
@@ -370,6 +392,7 @@ public class BattleManager : MonoBehaviour
     {
         if (isBattleOver)
         {
+            StopEnemyTurnRoutine();
             SetEnemyTargetButtonsInteractable(false);
             return;
         }
@@ -380,8 +403,75 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
+        if (enemyTurnCoroutine != null)
+        {
+            SetEnemyTargetButtonsInteractable(false);
+            Debug.LogWarning("BattleManager is already resolving an enemy turn.");
+            return;
+        }
+
         currentTurnIndex = (currentTurnIndex + 1) % battleUnits.Count;
         StartCurrentTurn();
+    }
+
+    private IEnumerator EnemyTurnRoutine(BattleUnit enemy)
+    {
+        yield return new WaitForSeconds(0.7f);
+
+        enemyTurnCoroutine = null;
+
+        if (isBattleOver || enemy == null || !enemy.IsAlive)
+        {
+            yield break;
+        }
+
+        var currentUnit = GetCurrentUnit();
+        if (currentUnit != enemy)
+        {
+            yield break;
+        }
+
+        PerformEnemyTurn(enemy);
+    }
+
+    private void PerformEnemyTurn(BattleUnit enemy)
+    {
+        if (enemy == null || !enemy.IsAlive || isBattleOver)
+        {
+            return;
+        }
+
+        SetEnemyTargetButtonsInteractable(false);
+
+        var target = battleUnits.FirstOrDefault(unit =>
+            unit != null &&
+            unit.Team == CharacterTeam.Player &&
+            unit.IsAlive);
+
+        if (target == null)
+        {
+            CheckBattleEnd();
+            return;
+        }
+
+        var damage = enemy.GetBasicAttackDamage();
+        target.TakeDamage(damage);
+
+        Debug.Log($"{enemy.Name} used {enemy.BasicAttackName} on {target.Name} for {damage} damage.");
+        Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+
+        if (!target.IsAlive)
+        {
+            Debug.Log($"{target.Name} was defeated.");
+        }
+
+        RefreshUnitViews();
+        CheckBattleEnd();
+
+        if (!isBattleOver)
+        {
+            EndCurrentTurn();
+        }
     }
 
     private bool HasLivingUnits(CharacterTeam team)
@@ -393,6 +483,7 @@ public class BattleManager : MonoBehaviour
     {
         if (isBattleOver)
         {
+            StopEnemyTurnRoutine();
             SetEnemyTargetButtonsInteractable(false);
             return;
         }
@@ -401,6 +492,7 @@ public class BattleManager : MonoBehaviour
         {
             isBattleOver = true;
             currentActionMode = BattleActionMode.None;
+            StopEnemyTurnRoutine();
             SetEnemyTargetButtonsInteractable(false);
             Debug.Log("Victory!");
             return;
@@ -410,8 +502,20 @@ public class BattleManager : MonoBehaviour
         {
             isBattleOver = true;
             currentActionMode = BattleActionMode.None;
+            StopEnemyTurnRoutine();
             SetEnemyTargetButtonsInteractable(false);
             Debug.Log("Defeat!");
         }
+    }
+
+    private void StopEnemyTurnRoutine()
+    {
+        if (enemyTurnCoroutine == null)
+        {
+            return;
+        }
+
+        StopCoroutine(enemyTurnCoroutine);
+        enemyTurnCoroutine = null;
     }
 }
