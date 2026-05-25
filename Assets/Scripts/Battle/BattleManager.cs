@@ -18,6 +18,8 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private List<CharacterData> enemyCharacters = new();
     [SerializeField] private List<BattleUnitView> playerUnitViews = new();
     [SerializeField] private List<BattleUnitView> enemyUnitViews = new();
+    [SerializeField] private List<WorldUnitView3D> playerWorldUnitViews = new();
+    [SerializeField] private List<WorldUnitView3D> enemyWorldUnitViews = new();
     [SerializeField] private List<TargetButton> enemyTargetButtons = new();
     [SerializeField] private List<WorldTarget3D> enemyWorldTargets = new();
     [SerializeField] private GameObject battleResultPanel;
@@ -85,6 +87,7 @@ public class BattleManager : MonoBehaviour
             $"{index + 1}. {unit.Name} ({unit.Team}) SPD {unit.Speed}"));
 
         BindUnitViews();
+        BindWorldUnitViews();
         SetupTargetButtons();
         SetupWorldTargets();
         RefreshUnitViews();
@@ -377,6 +380,22 @@ public class BattleManager : MonoBehaviour
         BindViewGroup(enemyUnitViews, enemyBattleUnits);
     }
 
+    private void BindWorldUnitViews()
+    {
+        if (playerWorldUnitViews.Count < playerBattleUnits.Count)
+        {
+            Debug.LogWarning($"BattleManager has fewer player world unit views ({playerWorldUnitViews.Count}) than player units ({playerBattleUnits.Count}).");
+        }
+
+        if (enemyWorldUnitViews.Count < enemyBattleUnits.Count)
+        {
+            Debug.LogWarning($"BattleManager has fewer enemy world unit views ({enemyWorldUnitViews.Count}) than enemy units ({enemyBattleUnits.Count}).");
+        }
+
+        BindWorldViewGroup(playerWorldUnitViews, playerBattleUnits);
+        BindWorldViewGroup(enemyWorldUnitViews, enemyBattleUnits);
+    }
+
     private void SetupTargetButtons()
     {
         enemyTargetButtonIndices.Clear();
@@ -505,9 +524,44 @@ public class BattleManager : MonoBehaviour
     {
         RefreshViewGroup(playerUnitViews);
         RefreshViewGroup(enemyUnitViews);
+        RefreshWorldUnitViews();
+    }
+
+    private void RefreshWorldUnitViews()
+    {
+        RefreshWorldViewGroup(playerWorldUnitViews);
+        RefreshWorldViewGroup(enemyWorldUnitViews);
     }
 
     private void RefreshViewGroup(IEnumerable<BattleUnitView> views)
+    {
+        foreach (var view in views)
+        {
+            if (view == null)
+            {
+                continue;
+            }
+
+            view.Refresh();
+        }
+    }
+
+    private void BindWorldViewGroup(IReadOnlyList<WorldUnitView3D> views, IReadOnlyList<BattleUnit> units)
+    {
+        var bindCount = Mathf.Min(views.Count, units.Count);
+        for (var index = 0; index < bindCount; index++)
+        {
+            var view = views[index];
+            if (view == null)
+            {
+                continue;
+            }
+
+            view.Bind(units[index]);
+        }
+    }
+
+    private void RefreshWorldViewGroup(IEnumerable<WorldUnitView3D> views)
     {
         foreach (var view in views)
         {
