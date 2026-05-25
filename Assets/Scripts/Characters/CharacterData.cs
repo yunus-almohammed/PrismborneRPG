@@ -6,6 +6,12 @@ public enum CharacterTeam
     Enemy
 }
 
+public enum SkillTargetType
+{
+    SingleTarget,
+    AllOpponents
+}
+
 [CreateAssetMenu(menuName = "RPG/Character Data", fileName = "NewCharacterData")]
 public class CharacterData : ScriptableObject
 {
@@ -16,6 +22,7 @@ public class CharacterData : ScriptableObject
     public int speed = 1;
     public string basicAttackName;
     public string skillName;
+    public SkillTargetType skillTargetType = SkillTargetType.SingleTarget;
     public int skillPower;
 
     private void OnValidate()

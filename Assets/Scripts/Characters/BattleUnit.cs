@@ -7,6 +7,8 @@ public class BattleUnit
 
     public string Name => Data != null ? Data.characterName : string.Empty;
     public string BasicAttackName => Data != null && !string.IsNullOrWhiteSpace(Data.basicAttackName) ? Data.basicAttackName : "Basic Attack";
+    public string SkillName => Data != null ? Data.skillName : string.Empty;
+    public SkillTargetType SkillTargetType => Data != null ? Data.skillTargetType : default;
     public CharacterTeam Team => Data != null ? Data.team : default;
     public int MaxHP => Data != null ? Data.maxHP : 0;
     public int Attack => Data != null ? Data.attack : 0;
