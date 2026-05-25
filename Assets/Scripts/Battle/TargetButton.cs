@@ -30,6 +30,16 @@ public class TargetButton : MonoBehaviour
 
     public void SetInteractable(bool value)
     {
+        SetTargetAvailable(value);
+    }
+
+    public void SetTargetAvailable(bool value)
+    {
+        if (button == null)
+        {
+            button = GetComponent<Button>();
+        }
+
         if (button != null)
         {
             button.interactable = value;

@@ -19,9 +19,10 @@ public class BattleManager : MonoBehaviour
     private readonly List<BattleUnit> battleUnits = new();
     private readonly List<BattleUnit> playerBattleUnits = new();
     private readonly List<BattleUnit> enemyBattleUnits = new();
-    private readonly HashSet<TargetButton> configuredEnemyTargetButtons = new();
+    private readonly Dictionary<TargetButton, int> enemyTargetButtonIndices = new();
     private int currentTurnIndex;
     private BattleActionMode currentActionMode = BattleActionMode.None;
+    private bool isBattleOver;
 
     private void Start()
     {
@@ -41,6 +42,7 @@ public class BattleManager : MonoBehaviour
         battleUnits.Clear();
         playerBattleUnits.Clear();
         enemyBattleUnits.Clear();
+        isBattleOver = false;
 
         AddBattleUnits(playerCharacters, playerBattleUnits);
         AddBattleUnits(enemyCharacters, enemyBattleUnits);
@@ -83,6 +85,12 @@ public class BattleManager : MonoBehaviour
 
     public void BasicAttack()
     {
+        if (isBattleOver)
+        {
+            SetEnemyTargetButtonsInteractable(false);
+            return;
+        }
+
         var currentUnit = GetCurrentUnit();
 
         if (currentUnit == null || !currentUnit.IsAlive)
@@ -155,8 +163,15 @@ public class BattleManager : MonoBehaviour
         }
 
         currentActionMode = BattleActionMode.None;
-        SetEnemyTargetButtonsInteractable(false);
         RefreshUnitViews();
+        CheckBattleEnd();
+
+        if (isBattleOver)
+        {
+            return;
+        }
+
+        SetEnemyTargetButtonsInteractable(false);
         EndCurrentTurn();
     }
 
@@ -178,7 +193,7 @@ public class BattleManager : MonoBehaviour
 
     private void SetupTargetButtons()
     {
-        configuredEnemyTargetButtons.Clear();
+        enemyTargetButtonIndices.Clear();
 
         foreach (var button in enemyTargetButtons)
         {
@@ -188,7 +203,7 @@ public class BattleManager : MonoBehaviour
             }
 
             button.Setup(this, -1);
-            button.SetInteractable(false);
+            button.SetTargetAvailable(false);
         }
 
         var livingEnemyUnits = enemyBattleUnits.Where(unit => unit != null && unit.IsAlive).ToList();
@@ -214,8 +229,8 @@ public class BattleManager : MonoBehaviour
             }
 
             button.Setup(this, battleUnitIndex);
-            button.SetInteractable(false);
-            configuredEnemyTargetButtons.Add(button);
+            button.SetTargetAvailable(false);
+            enemyTargetButtonIndices[button] = battleUnitIndex;
         }
     }
 
@@ -230,11 +245,20 @@ public class BattleManager : MonoBehaviour
 
             if (!value)
             {
-                button.SetInteractable(false);
+                button.SetTargetAvailable(false);
                 continue;
             }
 
-            button.SetInteractable(configuredEnemyTargetButtons.Contains(button));
+            if (!enemyTargetButtonIndices.TryGetValue(button, out var battleUnitIndex) ||
+                battleUnitIndex < 0 ||
+                battleUnitIndex >= battleUnits.Count)
+            {
+                button.SetTargetAvailable(false);
+                continue;
+            }
+
+            var targetUnit = battleUnits[battleUnitIndex];
+            button.SetTargetAvailable(!isBattleOver && targetUnit != null && targetUnit.IsAlive);
         }
     }
 
@@ -304,6 +328,12 @@ public class BattleManager : MonoBehaviour
 
     private void StartCurrentTurn()
     {
+        if (isBattleOver)
+        {
+            SetEnemyTargetButtonsInteractable(false);
+            return;
+        }
+
         if (battleUnits.Count == 0)
         {
             Debug.LogWarning("BattleManager cannot start a turn because there are no battle units.");
@@ -320,19 +350,30 @@ public class BattleManager : MonoBehaviour
         currentActionMode = BattleActionMode.None;
         SetEnemyTargetButtonsInteractable(false);
 
-        var currentUnit = battleUnits[currentTurnIndex];
-
-        if (!currentUnit.IsAlive)
+        for (var checkedCount = 0; checkedCount < battleUnits.Count; checkedCount++)
         {
-            EndCurrentTurn();
-            return;
+            var currentUnit = battleUnits[currentTurnIndex];
+            if (currentUnit != null && currentUnit.IsAlive)
+            {
+                Debug.Log($"{currentUnit.Name}'s turn");
+                return;
+            }
+
+            currentTurnIndex = (currentTurnIndex + 1) % battleUnits.Count;
         }
 
-        Debug.Log($"{currentUnit.Name}'s turn");
+        Debug.LogWarning("BattleManager cannot start a turn because no battle units are alive.");
+        CheckBattleEnd();
     }
 
     public void EndCurrentTurn()
     {
+        if (isBattleOver)
+        {
+            SetEnemyTargetButtonsInteractable(false);
+            return;
+        }
+
         if (battleUnits.Count == 0)
         {
             Debug.LogWarning("BattleManager cannot end a turn because there are no battle units.");
@@ -341,5 +382,36 @@ public class BattleManager : MonoBehaviour
 
         currentTurnIndex = (currentTurnIndex + 1) % battleUnits.Count;
         StartCurrentTurn();
+    }
+
+    private bool HasLivingUnits(CharacterTeam team)
+    {
+        return battleUnits.Any(unit => unit != null && unit.Team == team && unit.IsAlive);
+    }
+
+    private void CheckBattleEnd()
+    {
+        if (isBattleOver)
+        {
+            SetEnemyTargetButtonsInteractable(false);
+            return;
+        }
+
+        if (!HasLivingUnits(CharacterTeam.Enemy))
+        {
+            isBattleOver = true;
+            currentActionMode = BattleActionMode.None;
+            SetEnemyTargetButtonsInteractable(false);
+            Debug.Log("Victory!");
+            return;
+        }
+
+        if (!HasLivingUnits(CharacterTeam.Player))
+        {
+            isBattleOver = true;
+            currentActionMode = BattleActionMode.None;
+            SetEnemyTargetButtonsInteractable(false);
+            Debug.Log("Defeat!");
+        }
     }
 }

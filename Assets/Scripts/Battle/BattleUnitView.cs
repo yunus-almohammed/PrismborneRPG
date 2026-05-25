@@ -62,26 +62,27 @@ public class BattleUnitView : MonoBehaviour
         }
 
         var isDefeated = !boundUnit.IsAlive;
-        var targetAlpha = isDefeated ? 0.35f : 1f;
+        var boxAlpha = isDefeated ? 0.35f : 1f;
+        var textAlpha = isDefeated ? 0.45f : 1f;
 
         if (boxImage != null)
         {
             var color = boxImage.color;
-            color.a = targetAlpha;
+            color.a = boxAlpha;
             boxImage.color = color;
         }
 
         if (nameText != null)
         {
             var color = nameText.color;
-            color.a = targetAlpha;
+            color.a = textAlpha;
             nameText.color = color;
         }
 
         if (hpText != null)
         {
             var color = hpText.color;
-            color.a = targetAlpha;
+            color.a = textAlpha;
             hpText.color = color;
         }
     }
