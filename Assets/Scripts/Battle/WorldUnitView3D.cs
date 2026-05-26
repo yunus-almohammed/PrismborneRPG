@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class WorldUnitView3D : MonoBehaviour
 {
@@ -11,6 +12,8 @@ public class WorldUnitView3D : MonoBehaviour
     private BattleUnit boundUnit;
     private Vector3 originalHpBarFillLocalPosition;
     private bool hasOriginalHpBarFillLocalPosition;
+    private Color originalBodyColor = Color.white;
+    private bool hasOriginalBodyColor;
 
     public void Bind(BattleUnit unit)
     {
@@ -24,6 +27,12 @@ public class WorldUnitView3D : MonoBehaviour
         if (bodyRenderer == null && unitBody != null)
         {
             bodyRenderer = unitBody.GetComponent<Renderer>();
+        }
+
+        if (bodyRenderer != null && bodyRenderer.material != null)
+        {
+            originalBodyColor = bodyRenderer.material.color;
+            hasOriginalBodyColor = true;
         }
 
         if (hpBarFill != null)
@@ -75,5 +84,53 @@ public class WorldUnitView3D : MonoBehaviour
                 hpBarFill.localPosition = position;
             }
         }
+    }
+
+    public IEnumerator PlayHitFlash()
+    {
+        if (bodyRenderer == null || bodyRenderer.material == null)
+        {
+            yield break;
+        }
+
+        if (!hasOriginalBodyColor)
+        {
+            originalBodyColor = bodyRenderer.material.color;
+            hasOriginalBodyColor = true;
+        }
+
+        bodyRenderer.material.color = Color.white;
+        yield return new WaitForSeconds(0.15f);
+        bodyRenderer.material.color = originalBodyColor;
+    }
+
+    public IEnumerator PlayAttackMoveToward(Vector3 targetPosition)
+    {
+        var originalPosition = transform.position;
+        var attackPosition = Vector3.Lerp(originalPosition, targetPosition, 0.2f);
+        const float moveDuration = 0.15f;
+
+        var elapsed = 0f;
+        while (elapsed < moveDuration)
+        {
+            elapsed += Time.deltaTime;
+            var t = Mathf.Clamp01(elapsed / moveDuration);
+            transform.position = Vector3.Lerp(originalPosition, attackPosition, t);
+            yield return null;
+        }
+
+        transform.position = attackPosition;
+        yield return new WaitForSeconds(0.03f);
+
+        elapsed = 0f;
+        while (elapsed < moveDuration)
+        {
+            elapsed += Time.deltaTime;
+            var t = Mathf.Clamp01(elapsed / moveDuration);
+            transform.position = Vector3.Lerp(attackPosition, originalPosition, t);
+            yield return null;
+        }
+
+        transform.position = originalPosition;
     }
 }

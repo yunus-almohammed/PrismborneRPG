@@ -34,6 +34,7 @@ public class BattleManager : MonoBehaviour
     private int currentTurnIndex;
     private BattleActionMode currentActionMode = BattleActionMode.None;
     private bool isBattleOver;
+    private Coroutine actionResolutionCoroutine;
     private Coroutine enemyTurnCoroutine;
 
     private void Start()
@@ -98,6 +99,12 @@ public class BattleManager : MonoBehaviour
 
     private void OnDisable()
     {
+        if (actionResolutionCoroutine != null)
+        {
+            StopCoroutine(actionResolutionCoroutine);
+            actionResolutionCoroutine = null;
+        }
+
         if (enemyTurnCoroutine != null)
         {
             StopCoroutine(enemyTurnCoroutine);
@@ -118,6 +125,12 @@ public class BattleManager : MonoBehaviour
         if (isBattleOver)
         {
             SetEnemyTargetButtonsInteractable(false);
+            return;
+        }
+
+        if (actionResolutionCoroutine != null)
+        {
+            Debug.LogWarning("BattleManager is already resolving an action.");
             return;
         }
 
@@ -187,28 +200,9 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
-        var damage = attacker.GetBasicAttackDamage();
-        target.TakeDamage(damage);
-
-        Debug.Log($"{attacker.Name} used {attacker.BasicAttackName} on {target.Name} for {damage} damage.");
-        Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
-
-        if (!target.IsAlive)
-        {
-            Debug.Log($"{target.Name} was defeated.");
-        }
-
         currentActionMode = BattleActionMode.None;
-        RefreshUnitViews();
-        CheckBattleEnd();
-
-        if (isBattleOver)
-        {
-            return;
-        }
-
         SetEnemyTargetButtonsInteractable(false);
-        EndCurrentTurn();
+        StartBattleAction(ResolveSingleTargetAction(attacker, target, attacker.GetBasicAttackDamage(), attacker.BasicAttackName));
     }
 
     public void UseSkill()
@@ -216,6 +210,12 @@ public class BattleManager : MonoBehaviour
         if (isBattleOver)
         {
             SetEnemyTargetButtonsInteractable(false);
+            return;
+        }
+
+        if (actionResolutionCoroutine != null)
+        {
+            Debug.LogWarning("BattleManager is already resolving an action.");
             return;
         }
 
@@ -248,29 +248,7 @@ public class BattleManager : MonoBehaviour
                 return;
             }
 
-            var damage = currentUnit.GetSkillDamage();
-            Debug.Log($"{currentUnit.Name} used {currentUnit.SkillName}.");
-
-            foreach (var target in targets)
-            {
-                target.TakeDamage(damage);
-                Debug.Log($"{target.Name} took {damage} damage.");
-                Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
-
-                if (!target.IsAlive)
-                {
-                    Debug.Log($"{target.Name} was defeated.");
-                }
-            }
-
-            RefreshUnitViews();
-            CheckBattleEnd();
-
-            if (!isBattleOver)
-            {
-                EndCurrentTurn();
-            }
-
+            StartBattleAction(ResolveAllOpponentsSkill(currentUnit, targets));
             return;
         }
 
@@ -321,26 +299,9 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
-        var damage = attacker.GetSkillDamage();
-        target.TakeDamage(damage);
-
-        Debug.Log($"{attacker.Name} used {attacker.SkillName} on {target.Name} for {damage} damage.");
-        Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
-
-        if (!target.IsAlive)
-        {
-            Debug.Log($"{target.Name} was defeated.");
-        }
-
         currentActionMode = BattleActionMode.None;
         SetEnemyTargetButtonsInteractable(false);
-        RefreshUnitViews();
-        CheckBattleEnd();
-
-        if (!isBattleOver)
-        {
-            EndCurrentTurn();
-        }
+        StartBattleAction(ResolveSingleTargetAction(attacker, target, attacker.GetSkillDamage(), attacker.SkillName));
     }
 
     public void OnWorldTargetClicked(int targetBattleUnitIndex)
@@ -772,6 +733,13 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
+        if (actionResolutionCoroutine != null)
+        {
+            SetEnemyTargetButtonsInteractable(false);
+            Debug.LogWarning("BattleManager is already resolving an action.");
+            return;
+        }
+
         if (battleUnits.Count == 0)
         {
             Debug.LogWarning("BattleManager cannot end a turn because there are no battle units.");
@@ -847,24 +815,7 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
-        var damage = enemy.GetBasicAttackDamage();
-        target.TakeDamage(damage);
-
-        Debug.Log($"{enemy.Name} used {enemy.BasicAttackName} on {target.Name} for {damage} damage.");
-        Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
-
-        if (!target.IsAlive)
-        {
-            Debug.Log($"{target.Name} was defeated.");
-        }
-
-        RefreshUnitViews();
-        CheckBattleEnd();
-
-        if (!isBattleOver)
-        {
-            EndCurrentTurn();
-        }
+        StartBattleAction(ResolveSingleTargetAction(enemy, target, enemy.GetBasicAttackDamage(), enemy.BasicAttackName));
     }
 
     private void PerformEnemySkill(BattleUnit enemy)
@@ -892,28 +843,7 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
-        var damage = enemy.GetSkillDamage();
-        Debug.Log($"{enemy.Name} used {enemy.SkillName}.");
-
-        foreach (var target in targets)
-        {
-            target.TakeDamage(damage);
-            Debug.Log($"{target.Name} took {damage} damage.");
-            Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
-
-            if (!target.IsAlive)
-            {
-                Debug.Log($"{target.Name} was defeated.");
-            }
-        }
-
-        RefreshUnitViews();
-        CheckBattleEnd();
-
-        if (!isBattleOver)
-        {
-            EndCurrentTurn();
-        }
+        StartBattleAction(ResolveAllOpponentsSkill(enemy, targets));
     }
 
     private bool HasLivingUnits(CharacterTeam team)
@@ -980,5 +910,138 @@ public class BattleManager : MonoBehaviour
 
         StopCoroutine(enemyTurnCoroutine);
         enemyTurnCoroutine = null;
+    }
+
+    private void StartBattleAction(IEnumerator routine)
+    {
+        if (actionResolutionCoroutine != null)
+        {
+            StopCoroutine(actionResolutionCoroutine);
+        }
+
+        actionResolutionCoroutine = StartCoroutine(RunBattleAction(routine));
+    }
+
+    private IEnumerator RunBattleAction(IEnumerator routine)
+    {
+        yield return StartCoroutine(routine);
+        actionResolutionCoroutine = null;
+    }
+
+    private WorldUnitView3D GetWorldViewForUnit(BattleUnit unit)
+    {
+        if (unit == null)
+        {
+            return null;
+        }
+
+        var playerIndex = playerBattleUnits.IndexOf(unit);
+        if (playerIndex >= 0 && playerIndex < playerWorldUnitViews.Count)
+        {
+            return playerWorldUnitViews[playerIndex];
+        }
+
+        var enemyIndex = enemyBattleUnits.IndexOf(unit);
+        if (enemyIndex >= 0 && enemyIndex < enemyWorldUnitViews.Count)
+        {
+            return enemyWorldUnitViews[enemyIndex];
+        }
+
+        return null;
+    }
+
+    private IEnumerator PlayAttackFeedback(BattleUnit attacker, BattleUnit target)
+    {
+        var attackerView = GetWorldViewForUnit(attacker);
+        var targetView = GetWorldViewForUnit(target);
+        var runningCoroutines = new List<Coroutine>();
+
+        if (attackerView != null && targetView != null)
+        {
+            runningCoroutines.Add(StartCoroutine(attackerView.PlayAttackMoveToward(targetView.transform.position)));
+        }
+
+        if (targetView != null)
+        {
+            runningCoroutines.Add(StartCoroutine(targetView.PlayHitFlash()));
+        }
+
+        foreach (var runningCoroutine in runningCoroutines)
+        {
+            if (runningCoroutine != null)
+            {
+                yield return runningCoroutine;
+            }
+        }
+    }
+
+    private IEnumerator ResolveSingleTargetAction(BattleUnit attacker, BattleUnit target, int damage, string actionName)
+    {
+        yield return PlayAttackFeedback(attacker, target);
+
+        target.TakeDamage(damage);
+
+        Debug.Log($"{attacker.Name} used {actionName} on {target.Name} for {damage} damage.");
+        Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+
+        if (!target.IsAlive)
+        {
+            Debug.Log($"{target.Name} was defeated.");
+        }
+
+        RefreshUnitViews();
+        CheckBattleEnd();
+
+        if (!isBattleOver)
+        {
+            actionResolutionCoroutine = null;
+            EndCurrentTurn();
+        }
+    }
+
+    private IEnumerator ResolveAllOpponentsSkill(BattleUnit attacker, IReadOnlyList<BattleUnit> targets)
+    {
+        var runningCoroutines = new List<Coroutine>();
+
+        foreach (var target in targets)
+        {
+            var targetView = GetWorldViewForUnit(target);
+            if (targetView != null)
+            {
+                runningCoroutines.Add(StartCoroutine(targetView.PlayHitFlash()));
+            }
+        }
+
+        foreach (var runningCoroutine in runningCoroutines)
+        {
+            if (runningCoroutine != null)
+            {
+                yield return runningCoroutine;
+            }
+        }
+
+        var damage = attacker.GetSkillDamage();
+        Debug.Log($"{attacker.Name} used {attacker.SkillName}.");
+
+        foreach (var target in targets)
+        {
+            target.TakeDamage(damage);
+            Debug.Log($"{target.Name} took {damage} damage.");
+            Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
+
+            if (!target.IsAlive)
+            {
+                Debug.Log($"{target.Name} was defeated.");
+            }
+        }
+
+        RefreshUnitViews();
+        CheckBattleEnd();
+
+        if (!isBattleOver)
+        {
+            actionResolutionCoroutine = null;
+            EndCurrentTurn();
+        }
     }
 }
