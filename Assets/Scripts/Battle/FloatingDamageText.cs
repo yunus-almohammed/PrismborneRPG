@@ -8,14 +8,21 @@ public class FloatingDamageText : MonoBehaviour
 
     public void Show(int damage)
     {
+        gameObject.SetActive(true);
+
         if (damageText == null)
         {
-            damageText = GetComponentInChildren<TextMeshProUGUI>();
+            damageText = GetComponent<TextMeshProUGUI>();
         }
 
         if (damageText == null)
         {
-            Destroy(gameObject);
+            damageText = GetComponentInChildren<TextMeshProUGUI>(true);
+        }
+
+        if (damageText == null)
+        {
+            Debug.LogWarning("FloatingDamageText has no TextMeshProUGUI assigned.");
             return;
         }
 
@@ -24,10 +31,10 @@ public class FloatingDamageText : MonoBehaviour
         textColor.a = 1f;
         damageText.color = textColor;
         StopAllCoroutines();
-        StartCoroutine(PlayRoutine());
+        StartCoroutine(AnimateAndDestroy());
     }
 
-    private IEnumerator PlayRoutine()
+    private IEnumerator AnimateAndDestroy()
     {
         var rectTransform = transform as RectTransform;
         var startLocalPosition = rectTransform != null ? rectTransform.localPosition : transform.localPosition;
