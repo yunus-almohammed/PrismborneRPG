@@ -5,8 +5,11 @@ public class WorldUnitView3D : MonoBehaviour
     [SerializeField] private GameObject unitBody;
     [SerializeField] private Transform hpBarFill;
     [SerializeField] private Renderer bodyRenderer;
+    [SerializeField] private float fullHpBarWidth = 1.2f;
 
     private BattleUnit boundUnit;
+    private Vector3 originalHpBarFillLocalPosition;
+    private bool hasOriginalHpBarFillLocalPosition;
 
     public void Bind(BattleUnit unit)
     {
@@ -20,6 +23,12 @@ public class WorldUnitView3D : MonoBehaviour
         if (bodyRenderer == null && unitBody != null)
         {
             bodyRenderer = unitBody.GetComponent<Renderer>();
+        }
+
+        if (hpBarFill != null)
+        {
+            originalHpBarFillLocalPosition = hpBarFill.localPosition;
+            hasOriginalHpBarFillLocalPosition = true;
         }
 
         Refresh();
@@ -44,8 +53,15 @@ public class WorldUnitView3D : MonoBehaviour
                 : 0f;
 
             var scale = hpBarFill.localScale;
-            scale.x = hpPercent;
+            scale.x = fullHpBarWidth * hpPercent;
             hpBarFill.localScale = scale;
+
+            if (hasOriginalHpBarFillLocalPosition)
+            {
+                var position = originalHpBarFillLocalPosition;
+                position.x -= (fullHpBarWidth - scale.x) * 0.5f;
+                hpBarFill.localPosition = position;
+            }
         }
     }
 }
