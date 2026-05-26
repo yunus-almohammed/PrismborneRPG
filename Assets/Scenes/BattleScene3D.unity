@@ -865,7 +865,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed374dedafc98524a97a9167fb33f34b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldUnitView3D
-  unitBody: {fileID: 199833643}
+  unitBody: {fileID: 146530257}
   hpBarRoot: {fileID: 1530891147}
   hpBarFill: {fileID: 1162769464}
   bodyRenderer: {fileID: 146530259}
