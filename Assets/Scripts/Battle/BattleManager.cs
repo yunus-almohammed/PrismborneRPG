@@ -25,6 +25,8 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private GameObject battleResultPanel;
     [SerializeField] private TextMeshProUGUI battleResultText;
     [SerializeField] private TextMeshProUGUI turnIndicatorText;
+    [SerializeField] private FloatingDamageText floatingDamageTextPrefab;
+    [SerializeField] private Canvas worldTextCanvas;
 
     private readonly List<BattleUnit> battleUnits = new();
     private readonly List<BattleUnit> playerBattleUnits = new();
@@ -980,6 +982,7 @@ public class BattleManager : MonoBehaviour
         yield return PlayAttackFeedback(attacker, target);
 
         target.TakeDamage(damage);
+        ShowFloatingDamage(target, damage);
 
         Debug.Log($"{attacker.Name} used {actionName} on {target.Name} for {damage} damage.");
         Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
@@ -1026,6 +1029,7 @@ public class BattleManager : MonoBehaviour
         foreach (var target in targets)
         {
             target.TakeDamage(damage);
+            ShowFloatingDamage(target, damage);
             Debug.Log($"{target.Name} took {damage} damage.");
             Debug.Log($"{target.Name} HP: {target.CurrentHP}/{target.MaxHP}");
 
@@ -1043,5 +1047,52 @@ public class BattleManager : MonoBehaviour
             actionResolutionCoroutine = null;
             EndCurrentTurn();
         }
+    }
+
+    private void ShowFloatingDamage(BattleUnit target, int damage)
+    {
+        if (target == null || damage <= 0 || floatingDamageTextPrefab == null || worldTextCanvas == null)
+        {
+            return;
+        }
+
+        var targetView = GetWorldViewForUnit(target);
+        var mainCamera = Camera.main;
+        if (targetView == null || mainCamera == null)
+        {
+            return;
+        }
+
+        var screenPosition = mainCamera.WorldToScreenPoint(targetView.transform.position + Vector3.up * 1.5f);
+        if (screenPosition.z <= 0f)
+        {
+            return;
+        }
+
+        var floatingText = Instantiate(floatingDamageTextPrefab, worldTextCanvas.transform);
+        var floatingRect = floatingText.transform as RectTransform;
+        var canvasRect = worldTextCanvas.transform as RectTransform;
+        var canvasCamera = worldTextCanvas.renderMode == RenderMode.ScreenSpaceOverlay
+            ? null
+            : worldTextCanvas.worldCamera != null
+                ? worldTextCanvas.worldCamera
+                : mainCamera;
+
+        if (floatingRect != null &&
+            canvasRect != null &&
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition, canvasCamera, out var localPoint))
+        {
+            floatingRect.localPosition = localPoint;
+        }
+        else if (floatingRect != null)
+        {
+            floatingRect.position = screenPosition;
+        }
+        else
+        {
+            floatingText.transform.position = screenPosition;
+        }
+
+        floatingText.Show(damage);
     }
 }
