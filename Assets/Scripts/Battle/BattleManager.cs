@@ -453,6 +453,7 @@ public class BattleManager : MonoBehaviour
 
             worldTarget.Setup(this, -1);
             worldTarget.SetClickable(false);
+            worldTarget.SetMarkerVisible(false);
         }
 
         if (enemyWorldTargets.Count < enemyBattleUnits.Count)
@@ -479,6 +480,7 @@ public class BattleManager : MonoBehaviour
 
             worldTarget.Setup(this, battleUnitIndex);
             worldTarget.SetClickable(false);
+            worldTarget.SetMarkerVisible(false);
             enemyWorldTargetIndices[worldTarget] = battleUnitIndex;
         }
     }
@@ -511,6 +513,7 @@ public class BattleManager : MonoBehaviour
         }
 
         SetEnemyWorldTargetsClickable(value);
+        SetEnemyTargetMarkersVisible(value);
     }
 
     private void BindViewGroup(IReadOnlyList<BattleUnitView> views, IReadOnlyList<BattleUnit> units)
@@ -611,6 +614,34 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    private void SetEnemyTargetMarkersVisible(bool value)
+    {
+        foreach (var worldTarget in enemyWorldTargets)
+        {
+            if (worldTarget == null)
+            {
+                continue;
+            }
+
+            if (!value)
+            {
+                worldTarget.SetMarkerVisible(false);
+                continue;
+            }
+
+            if (!enemyWorldTargetIndices.TryGetValue(worldTarget, out var battleUnitIndex) ||
+                battleUnitIndex < 0 ||
+                battleUnitIndex >= battleUnits.Count)
+            {
+                worldTarget.SetMarkerVisible(false);
+                continue;
+            }
+
+            var targetUnit = battleUnits[battleUnitIndex];
+            worldTarget.SetMarkerVisible(!isBattleOver && targetUnit != null && targetUnit.IsAlive);
+        }
+    }
+
     private void SyncDefeatedEnemyWorldTargets()
     {
         foreach (var worldTarget in enemyWorldTargets)
@@ -625,6 +656,7 @@ public class BattleManager : MonoBehaviour
                 battleUnitIndex >= battleUnits.Count)
             {
                 worldTarget.SetClickable(false);
+                worldTarget.SetMarkerVisible(false);
                 continue;
             }
 
@@ -632,6 +664,7 @@ public class BattleManager : MonoBehaviour
             if (targetUnit == null || !targetUnit.IsAlive)
             {
                 worldTarget.SetClickable(false);
+                worldTarget.SetMarkerVisible(false);
             }
         }
     }

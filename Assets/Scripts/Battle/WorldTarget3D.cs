@@ -3,10 +3,17 @@ using UnityEngine.EventSystems;
 
 public class WorldTarget3D : MonoBehaviour, IPointerClickHandler
 {
+    [SerializeField] private GameObject selectionMarker;
+
     private BattleManager battleManager;
     private int battleUnitIndex = -1;
     private Collider worldCollider;
     private bool hasWarnedMissingCollider;
+
+    private void Awake()
+    {
+        SetMarkerVisible(false);
+    }
 
     public void Setup(BattleManager manager, int unitIndex)
     {
@@ -50,5 +57,13 @@ public class WorldTarget3D : MonoBehaviour, IPointerClickHandler
         }
 
         worldCollider.enabled = value;
+    }
+
+    public void SetMarkerVisible(bool value)
+    {
+        if (selectionMarker != null)
+        {
+            selectionMarker.SetActive(value);
+        }
     }
 }
