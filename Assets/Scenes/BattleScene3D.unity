@@ -272,8 +272,8 @@ MonoBehaviour:
   enemyUnitViews: []
   playerWorldUnitViews:
   - {fileID: 102219069}
-  - {fileID: 317648188}
   - {fileID: 199833648}
+  - {fileID: 317648188}
   enemyWorldUnitViews:
   - {fileID: 1157496306}
   - {fileID: 1234157533}
@@ -436,6 +436,7 @@ MonoBehaviour:
   unitBody: {fileID: 102219064}
   hpBarFill: {fileID: 1300565789}
   bodyRenderer: {fileID: 102219066}
+  fullHpBarWidth: 1.2
 --- !u!1 &107084436
 GameObject:
   m_ObjectHideFlags: 0
@@ -719,6 +720,7 @@ MonoBehaviour:
   unitBody: {fileID: 199833643}
   hpBarFill: {fileID: 1162769464}
   bodyRenderer: {fileID: 146530259}
+  fullHpBarWidth: 1.2
 --- !u!1 &170478469
 GameObject:
   m_ObjectHideFlags: 0
@@ -1238,6 +1240,7 @@ MonoBehaviour:
   unitBody: {fileID: 199833643}
   hpBarFill: {fileID: 1756335650}
   bodyRenderer: {fileID: 199833645}
+  fullHpBarWidth: 1.2
 --- !u!1 &259415511
 GameObject:
   m_ObjectHideFlags: 0
@@ -1619,6 +1622,7 @@ MonoBehaviour:
   unitBody: {fileID: 317648183}
   hpBarFill: {fileID: 575863225}
   bodyRenderer: {fileID: 317648185}
+  fullHpBarWidth: 1.2
 --- !u!1 &438232202
 GameObject:
   m_ObjectHideFlags: 0
@@ -2047,7 +2051,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &490759099
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3898,6 +3902,7 @@ MonoBehaviour:
   unitBody: {fileID: 1157496300}
   hpBarFill: {fileID: 198044120}
   bodyRenderer: {fileID: 1157496302}
+  fullHpBarWidth: 1.2
 --- !u!1 &1162769463
 GameObject:
   m_ObjectHideFlags: 0
@@ -4446,6 +4451,7 @@ MonoBehaviour:
   unitBody: {fileID: 1234157527}
   hpBarFill: {fileID: 955715143}
   bodyRenderer: {fileID: 1234157529}
+  fullHpBarWidth: 1.2
 --- !u!1 &1300565788
 GameObject:
   m_ObjectHideFlags: 0
