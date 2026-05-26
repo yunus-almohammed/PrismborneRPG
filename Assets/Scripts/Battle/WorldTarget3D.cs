@@ -5,6 +5,8 @@ public class WorldTarget3D : MonoBehaviour, IPointerClickHandler
 {
     private BattleManager battleManager;
     private int battleUnitIndex = -1;
+    private Collider worldCollider;
+    private bool hasWarnedMissingCollider;
 
     public void Setup(BattleManager manager, int unitIndex)
     {
@@ -27,5 +29,26 @@ public class WorldTarget3D : MonoBehaviour, IPointerClickHandler
         }
 
         battleManager.OnWorldTargetClicked(battleUnitIndex);
+    }
+
+    public void SetClickable(bool value)
+    {
+        if (worldCollider == null)
+        {
+            worldCollider = GetComponent<Collider>();
+        }
+
+        if (worldCollider == null)
+        {
+            if (!hasWarnedMissingCollider)
+            {
+                Debug.LogWarning("WorldTarget3D could not find a Collider on this GameObject.");
+                hasWarnedMissingCollider = true;
+            }
+
+            return;
+        }
+
+        worldCollider.enabled = value;
     }
 }

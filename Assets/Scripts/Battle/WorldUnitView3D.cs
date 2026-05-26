@@ -3,6 +3,7 @@ using UnityEngine;
 public class WorldUnitView3D : MonoBehaviour
 {
     [SerializeField] private GameObject unitBody;
+    [SerializeField] private GameObject hpBarRoot;
     [SerializeField] private Transform hpBarFill;
     [SerializeField] private Renderer bodyRenderer;
     [SerializeField] private float fullHpBarWidth = 1.2f;
@@ -41,9 +42,20 @@ public class WorldUnitView3D : MonoBehaviour
             return;
         }
 
+        var isAlive = boundUnit.IsAlive;
+
         if (unitBody != null)
         {
-            unitBody.SetActive(boundUnit.IsAlive);
+            unitBody.SetActive(isAlive);
+        }
+
+        if (hpBarRoot != null)
+        {
+            hpBarRoot.SetActive(isAlive);
+        }
+        else if (hpBarFill != null)
+        {
+            hpBarFill.gameObject.SetActive(isAlive);
         }
 
         if (hpBarFill != null)

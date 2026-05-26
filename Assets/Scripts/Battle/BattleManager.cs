@@ -30,6 +30,7 @@ public class BattleManager : MonoBehaviour
     private readonly List<BattleUnit> playerBattleUnits = new();
     private readonly List<BattleUnit> enemyBattleUnits = new();
     private readonly Dictionary<TargetButton, int> enemyTargetButtonIndices = new();
+    private readonly Dictionary<WorldTarget3D, int> enemyWorldTargetIndices = new();
     private int currentTurnIndex;
     private BattleActionMode currentActionMode = BattleActionMode.None;
     private bool isBattleOver;
@@ -441,6 +442,8 @@ public class BattleManager : MonoBehaviour
 
     private void SetupWorldTargets()
     {
+        enemyWorldTargetIndices.Clear();
+
         foreach (var worldTarget in enemyWorldTargets)
         {
             if (worldTarget == null)
@@ -449,6 +452,7 @@ public class BattleManager : MonoBehaviour
             }
 
             worldTarget.Setup(this, -1);
+            worldTarget.SetClickable(false);
         }
 
         if (enemyWorldTargets.Count < enemyBattleUnits.Count)
@@ -474,6 +478,8 @@ public class BattleManager : MonoBehaviour
             }
 
             worldTarget.Setup(this, battleUnitIndex);
+            worldTarget.SetClickable(false);
+            enemyWorldTargetIndices[worldTarget] = battleUnitIndex;
         }
     }
 
@@ -503,6 +509,8 @@ public class BattleManager : MonoBehaviour
             var targetUnit = battleUnits[battleUnitIndex];
             button.SetTargetAvailable(!isBattleOver && targetUnit != null && targetUnit.IsAlive);
         }
+
+        SetEnemyWorldTargetsClickable(value);
     }
 
     private void BindViewGroup(IReadOnlyList<BattleUnitView> views, IReadOnlyList<BattleUnit> units)
@@ -531,6 +539,7 @@ public class BattleManager : MonoBehaviour
     {
         RefreshWorldViewGroup(playerWorldUnitViews);
         RefreshWorldViewGroup(enemyWorldUnitViews);
+        SyncDefeatedEnemyWorldTargets();
     }
 
     private void RefreshViewGroup(IEnumerable<BattleUnitView> views)
@@ -571,6 +580,59 @@ public class BattleManager : MonoBehaviour
             }
 
             view.Refresh();
+        }
+    }
+
+    private void SetEnemyWorldTargetsClickable(bool value)
+    {
+        foreach (var worldTarget in enemyWorldTargets)
+        {
+            if (worldTarget == null)
+            {
+                continue;
+            }
+
+            if (!value)
+            {
+                worldTarget.SetClickable(false);
+                continue;
+            }
+
+            if (!enemyWorldTargetIndices.TryGetValue(worldTarget, out var battleUnitIndex) ||
+                battleUnitIndex < 0 ||
+                battleUnitIndex >= battleUnits.Count)
+            {
+                worldTarget.SetClickable(false);
+                continue;
+            }
+
+            var targetUnit = battleUnits[battleUnitIndex];
+            worldTarget.SetClickable(!isBattleOver && targetUnit != null && targetUnit.IsAlive);
+        }
+    }
+
+    private void SyncDefeatedEnemyWorldTargets()
+    {
+        foreach (var worldTarget in enemyWorldTargets)
+        {
+            if (worldTarget == null)
+            {
+                continue;
+            }
+
+            if (!enemyWorldTargetIndices.TryGetValue(worldTarget, out var battleUnitIndex) ||
+                battleUnitIndex < 0 ||
+                battleUnitIndex >= battleUnits.Count)
+            {
+                worldTarget.SetClickable(false);
+                continue;
+            }
+
+            var targetUnit = battleUnits[battleUnitIndex];
+            if (targetUnit == null || !targetUnit.IsAlive)
+            {
+                worldTarget.SetClickable(false);
+            }
         }
     }
 
