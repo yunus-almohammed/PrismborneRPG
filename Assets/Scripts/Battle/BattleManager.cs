@@ -1051,48 +1051,53 @@ public class BattleManager : MonoBehaviour
 
     private void ShowFloatingDamage(BattleUnit target, int damage)
     {
-        if (target == null || damage <= 0 || floatingDamageTextPrefab == null || worldTextCanvas == null)
+        if (target == null || damage <= 0)
         {
+            return;
+        }
+
+        if (floatingDamageTextPrefab == null)
+        {
+            Debug.LogWarning("Floating damage prefab is not assigned.");
+            return;
+        }
+
+        if (worldTextCanvas == null)
+        {
+            Debug.LogWarning("World text canvas is not assigned.");
             return;
         }
 
         var targetView = GetWorldViewForUnit(target);
-        var mainCamera = Camera.main;
-        if (targetView == null || mainCamera == null)
+        if (targetView == null)
         {
+            Debug.LogWarning($"No world view found for floating damage target: {target.Name}");
             return;
         }
 
-        var screenPosition = mainCamera.WorldToScreenPoint(targetView.transform.position + Vector3.up * 1.5f);
-        if (screenPosition.z <= 0f)
+        var mainCamera = Camera.main;
+        if (mainCamera == null)
         {
+            Debug.LogWarning("Main camera not found for floating damage.");
             return;
         }
+
+        var screenPosition = mainCamera.WorldToScreenPoint(targetView.transform.position + Vector3.up * 1.8f);
 
         var floatingText = Instantiate(floatingDamageTextPrefab, worldTextCanvas.transform);
         var floatingRect = floatingText.transform as RectTransform;
-        var canvasRect = worldTextCanvas.transform as RectTransform;
-        var canvasCamera = worldTextCanvas.renderMode == RenderMode.ScreenSpaceOverlay
-            ? null
-            : worldTextCanvas.worldCamera != null
-                ? worldTextCanvas.worldCamera
-                : mainCamera;
-
-        if (floatingRect != null &&
-            canvasRect != null &&
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition, canvasCamera, out var localPoint))
-        {
-            floatingRect.localPosition = localPoint;
-        }
-        else if (floatingRect != null)
+        if (floatingRect != null)
         {
             floatingRect.position = screenPosition;
+            floatingRect.localScale = Vector3.one;
         }
         else
         {
             floatingText.transform.position = screenPosition;
+            floatingText.transform.localScale = Vector3.one;
         }
 
         floatingText.Show(damage);
+        Debug.Log($"Floating damage spawned: {damage}");
     }
 }
