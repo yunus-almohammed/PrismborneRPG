@@ -7,17 +7,23 @@ public class WorldUnitView3D : MonoBehaviour
     [SerializeField] private GameObject hpBarRoot;
     [SerializeField] private Transform hpBarFill;
     [SerializeField] private Renderer bodyRenderer;
-    [SerializeField] private float fullHpBarWidth = 1.2f;
+    [SerializeField] private float fullHpBarWidth = 2.5f;
+
+    private static readonly Color HeroHpColor = new Color(0.18f, 0.88f, 0.22f);
+    private static readonly Color EnemyHpColor = new Color(0.9f, 0.12f, 0.12f);
 
     private BattleUnit boundUnit;
     private Vector3 originalHpBarFillLocalPosition;
     private bool hasOriginalHpBarFillLocalPosition;
     private Color originalBodyColor = Color.white;
     private bool hasOriginalBodyColor;
+    private Renderer hpBarFillRenderer;
+    private Camera mainCamera;
 
     public void Bind(BattleUnit unit)
     {
         boundUnit = unit;
+        mainCamera = Camera.main;
 
         if (unitBody == null)
         {
@@ -39,9 +45,27 @@ public class WorldUnitView3D : MonoBehaviour
         {
             originalHpBarFillLocalPosition = hpBarFill.localPosition;
             hasOriginalHpBarFillLocalPosition = true;
+            hpBarFillRenderer = hpBarFill.GetComponent<Renderer>();
+        }
+
+        if (hpBarFillRenderer != null && unit != null)
+        {
+            hpBarFillRenderer.material.color = unit.Team == CharacterTeam.Player
+                ? HeroHpColor
+                : EnemyHpColor;
         }
 
         Refresh();
+    }
+
+    private void LateUpdate()
+    {
+        if (hpBarRoot == null) return;
+        var cam = mainCamera != null ? mainCamera : Camera.main;
+        if (cam != null)
+        {
+            hpBarRoot.transform.rotation = cam.transform.rotation;
+        }
     }
 
     public void Refresh()
