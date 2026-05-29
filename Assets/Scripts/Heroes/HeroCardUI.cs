@@ -18,7 +18,7 @@ public class HeroCardUI : MonoBehaviour
             heroNameText.text = data.heroName;
 
         if (starsText != null)
-            starsText.text = new string('★', data.stars) + new string('☆', MaxStars - data.stars);
+            starsText.text = $"{new string('*', data.stars)} ({data.stars}/{MaxStars})";
 
         if (xpBar != null)
             xpBar.value = data.xpToNextLevel > 0 ? data.currentXP / (float)data.xpToNextLevel : 0f;
