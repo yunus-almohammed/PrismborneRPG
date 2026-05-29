@@ -10,20 +10,23 @@ public class HeroCardUI : MonoBehaviour
     public Image heroPortraitImage;
     public Image lockedOverlay;
 
+    private const int MaxStars = 5;
+
     public void Setup(HeroData data)
     {
-        heroNameText.text = data.heroName;
-        starsText.text = new string('★', data.stars);
+        if (heroNameText != null)
+            heroNameText.text = data.heroName;
 
-        if (data.xpToNextLevel > 0)
-            xpBar.value = (float)data.currentXP / data.xpToNextLevel;
-        else
-            xpBar.value = 0f;
+        if (starsText != null)
+            starsText.text = new string('★', data.stars) + new string('☆', MaxStars - data.stars);
+
+        if (xpBar != null)
+            xpBar.value = data.xpToNextLevel > 0 ? data.currentXP / (float)data.xpToNextLevel : 0f;
 
         if (lockedOverlay != null)
         {
-            lockedOverlay.gameObject.SetActive(!data.isUnlocked);
             lockedOverlay.color = new Color(0f, 0f, 0f, 0.6f);
+            lockedOverlay.gameObject.SetActive(!data.isUnlocked);
         }
     }
 }

@@ -16,16 +16,17 @@ public class HeroesScreenManager : MonoBehaviour
         foreach (Transform child in gridContent)
             Destroy(child.gameObject);
 
-        foreach (HeroData hero in heroCollection.allHeroes)
+        foreach (HeroData heroData in heroCollection.allHeroes)
         {
             GameObject card = Instantiate(heroCardPrefab, gridContent);
+
             HeroCardUI cardUI = card.GetComponent<HeroCardUI>();
             if (cardUI != null)
-                cardUI.Setup(hero);
+                cardUI.Setup(heroData);
 
             HeroCardClickHandler clickHandler = card.GetComponent<HeroCardClickHandler>();
             if (clickHandler != null)
-                clickHandler.Init(hero, OnHeroCardClicked);
+                clickHandler.Init(heroData, OnHeroCardClicked);
         }
     }
 
