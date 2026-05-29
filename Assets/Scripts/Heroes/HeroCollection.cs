@@ -6,6 +6,17 @@ public class HeroCollection : MonoBehaviour
     public List<HeroData> allHeroes = new List<HeroData>();
     public List<HeroData> unlockedHeroes = new List<HeroData>();
 
+    private void Awake()
+    {
+        allHeroes = new List<HeroData>(Resources.LoadAll<HeroData>("Heroes"));
+        unlockedHeroes.Clear();
+        foreach (HeroData hero in allHeroes)
+        {
+            if (hero.isUnlocked)
+                unlockedHeroes.Add(hero);
+        }
+    }
+
     public void UnlockHero(HeroData hero)
     {
         if (hero == null || hero.isUnlocked) return;
