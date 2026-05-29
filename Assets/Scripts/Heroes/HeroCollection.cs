@@ -8,7 +8,8 @@ public class HeroCollection : MonoBehaviour
 
     private void Awake()
     {
-        allHeroes = new List<HeroData>(Resources.LoadAll<HeroData>("Heroes"));
+        HeroData[] heroes = Resources.LoadAll<HeroData>("Heroes");
+        allHeroes = new List<HeroData>(heroes);
         unlockedHeroes.Clear();
         foreach (HeroData hero in allHeroes)
         {
