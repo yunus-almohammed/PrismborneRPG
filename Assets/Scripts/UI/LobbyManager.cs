@@ -21,6 +21,10 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] private Button eventsButton;
     [SerializeField] private Button storeButton;
 
+    [Header("Screens")]
+    [SerializeField] private GameObject[] lobbyElements;
+    [SerializeField] private GameObject heroesScreen;
+
     private const string DefaultPlayerName = "Player";
     private const int DefaultPlayerLevel = 1;
 
@@ -48,7 +52,7 @@ public class LobbyManager : MonoBehaviour
             summonButton.onClick.AddListener(() => Debug.Log("Summon"));
 
         if (heroesButton != null)
-            heroesButton.onClick.AddListener(() => Debug.Log("Heroes"));
+            heroesButton.onClick.AddListener(OnHeroesButtonClicked);
 
         if (eventsButton != null)
             eventsButton.onClick.AddListener(() => Debug.Log("Events"));
@@ -64,6 +68,27 @@ public class LobbyManager : MonoBehaviour
             var slot = i;
             heroSlotButtons[slot]?.onClick.AddListener(() => Debug.Log($"Hero slot {slot + 1}"));
         }
+    }
+
+    public void ShowHeroesScreen()
+    {
+        foreach (var element in lobbyElements)
+            element?.SetActive(false);
+
+        heroesScreen?.SetActive(true);
+    }
+
+    public void ShowLobby()
+    {
+        foreach (var element in lobbyElements)
+            element?.SetActive(true);
+
+        heroesScreen?.SetActive(false);
+    }
+
+    private void OnHeroesButtonClicked()
+    {
+        ShowHeroesScreen();
     }
 
     private void OnBattleClicked()
