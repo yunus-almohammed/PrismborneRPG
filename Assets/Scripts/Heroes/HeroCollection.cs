@@ -10,12 +10,9 @@ public class HeroCollection : MonoBehaviour
     {
         HeroData[] heroes = Resources.LoadAll<HeroData>("Heroes");
         allHeroes = new List<HeroData>(heroes);
-        unlockedHeroes.Clear();
-        foreach (HeroData hero in allHeroes)
-        {
-            if (hero.isUnlocked)
-                unlockedHeroes.Add(hero);
-        }
+
+        HeroData[] playerHeroes = Resources.LoadAll<HeroData>("PlayerHeroes");
+        unlockedHeroes = new List<HeroData>(playerHeroes);
     }
 
     public void UnlockHero(HeroData hero)
