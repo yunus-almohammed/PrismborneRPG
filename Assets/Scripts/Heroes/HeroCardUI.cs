@@ -23,6 +23,9 @@ public class HeroCardUI : MonoBehaviour
         if (xpBar != null)
             xpBar.value = data.xpToNextLevel > 0 ? data.currentXP / (float)data.xpToNextLevel : 0f;
 
+        if (heroPortraitImage != null && data.portraitSprite != null)
+            heroPortraitImage.sprite = data.portraitSprite;
+
         if (lockedOverlay != null)
         {
             lockedOverlay.color = new Color(0f, 0f, 0f, 0.6f);

@@ -23,5 +23,7 @@ public class HeroData : ScriptableObject
 
     public bool isUnlocked;
 
+    public Sprite portraitSprite;
+
     public bool isEligibleForEvolution => level >= 10 && duplicateCount >= 10;
 }
