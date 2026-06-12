@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1b2d4662e72c4e019063182a65200624, type: 3}
-  m_Name: HeroData_Lyra 1
+  m_Name: HeroData_Lyra
   m_EditorClassIdentifier: Assembly-CSharp::HeroData
   heroName: Lyra
   heroClass: 1
@@ -24,3 +24,4 @@ MonoBehaviour:
   stars: 4
   duplicateCount: 0
   isUnlocked: 1
+  portraitSprite: {fileID: 1070808964735896586, guid: f371b0a66313f034fbf0602dcca80595, type: 3}

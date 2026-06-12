@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1b2d4662e72c4e019063182a65200624, type: 3}
-  m_Name: HeroData_Brakk
+  m_Name: HeroData_Malachar
   m_EditorClassIdentifier: Assembly-CSharp::HeroData
-  heroName: Brakk
+  heroName: Malachar
   heroClass: 0
-  maxHealth: 1800
-  attackPower: 340
-  defense: 200
-  speed: 60
+  maxHealth: 0
+  attackPower: 0
+  defense: 0
+  speed: 0
   level: 1
   currentXP: 0
-  xpToNextLevel: 100
-  stars: 5
+  xpToNextLevel: 0
+  stars: 1
   duplicateCount: 0
-  isUnlocked: 1
-  portraitSprite: {fileID: 911950590595190805, guid: 08537c521fbc4bf469138d6c1922f706, type: 3}
+  isUnlocked: 0
+  portraitSprite: {fileID: -4683620954584818860, guid: a955b4f81f8522c4c8692ad6ada33190, type: 3}

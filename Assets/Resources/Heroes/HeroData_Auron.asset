@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1b2d4662e72c4e019063182a65200624, type: 3}
-  m_Name: HeroData_Auron 1
+  m_Name: HeroData_Auron
   m_EditorClassIdentifier: Assembly-CSharp::HeroData
   heroName: Auron
   heroClass: 0
@@ -24,3 +24,4 @@ MonoBehaviour:
   stars: 4
   duplicateCount: 0
   isUnlocked: 1
+  portraitSprite: {fileID: 4515687061628930486, guid: f277cfed19844a54c9176d049f682207, type: 3}
